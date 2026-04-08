@@ -268,6 +268,11 @@ footer{background:#06101f;padding:32px 5%;display:flex;align-items:center;justif
 .btn-next{background:var(--orange);color:white;border:none;padding:10px 22px;border-radius:6px;font-size:13px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif;transition:background 0.2s}
 .btn-next:hover{background:var(--orange2)}
 .btn-next:disabled{background:var(--border);cursor:not-allowed;color:var(--warm-gray)}
+.hamburger{display:none;flex-direction:column;justify-content:center;gap:5px;background:none;border:none;cursor:pointer;padding:6px;width:36px;height:36px}
+.hamburger span{display:block;width:22px;height:2px;background:white;border-radius:2px;transition:all 0.3s}
+.hamburger.open span:nth-child(1){transform:translateY(7px) rotate(45deg)}
+.hamburger.open span:nth-child(2){opacity:0}
+.hamburger.open span:nth-child(3){transform:translateY(-7px) rotate(-45deg)}
 @media (max-width: 768px) {
   .hero{grid-template-columns:1fr;min-height:auto;padding:50px 5%}
   .hero::after{display:none}
@@ -278,9 +283,13 @@ footer{background:#06101f;padding:32px 5%;display:flex;align-items:center;justif
   .faq-grid{grid-template-columns:1fr}
   .ba-grid{grid-template-columns:1fr}
   .blog-grid{grid-template-columns:1fr}
-  .nav-links{display:none}
+  .hamburger{display:flex}
+  .nav-links{display:none;position:absolute;top:70px;left:0;right:0;background:var(--navy);flex-direction:column;gap:0;padding:10px 0;border-top:1px solid rgba(255,255,255,0.08)}
+  .nav-links li a{display:block;padding:13px 5%;font-size:15px;color:rgba(255,255,255,0.75)}
+  nav.nav-open .nav-links{display:flex}
   .trust-bar{justify-content:center}
   .contact-info{flex-direction:column;align-items:center;gap:14px}
+  nav{position:sticky;flex-wrap:wrap}
 }
 @media (max-width: 480px) {
   .services-grid{grid-template-columns:1fr}
@@ -305,6 +314,7 @@ footer{background:#06101f;padding:32px 5%;display:flex;align-items:center;justif
     <li><a href="#contact">Contact</a></li>
   </ul>
   <button class="nav-cta" onclick="openModal()">Get a Free Quote</button>
+  <button class="hamburger" id="hamburger" onclick="toggleNav()" aria-label="Toggle menu"><span></span><span></span><span></span></button>
 </nav>
 <section class="hero">
   <div>
@@ -598,6 +608,22 @@ footer{background:#06101f;padding:32px 5%;display:flex;align-items:center;justif
     <a href="tel:6094378143">(609) 437-8143</a>
   </div>
 </footer>
+<!-- Hidden form: Netlify reads this at deploy time to register the form -->
+<form name="quote-request" netlify netlify-honeypot="bot-field" hidden>
+  <input type="hidden" name="form-name" value="quote-request">
+  <input name="bot-field">
+  <input name="business-name">
+  <input name="contact-name">
+  <input name="phone">
+  <input name="email">
+  <input name="address">
+  <input name="facility-type">
+  <input name="square-footage">
+  <input name="restrooms">
+  <input name="services">
+  <input name="frequency">
+</form>
+
 <div class="modal-overlay" id="modalOverlay" onclick="if(event.target===this)closeModal()">
   <div class="modal">
     <div class="modal-header">
@@ -766,7 +792,31 @@ function mSelectFreq(el,key,mult){
   mData.freq=key; mData.freqMult=mult;
   document.getElementById('mnextBtn5').disabled=false;
 }
+function submitToNetlify(){
+  const encode=data=>Object.keys(data).map(k=>encodeURIComponent(k)+'='+encodeURIComponent(data[k])).join('&');
+  const sel=document.querySelectorAll('.svc-check-btn.selected');
+  const services=sel.length>0?Array.from(sel).map(b=>b.textContent.trim()).join(', '):'General cleaning';
+  const fl=document.querySelector('.freq-opt.selected .freq-opt-label')?.textContent||'—';
+  fetch('/',{
+    method:'POST',
+    headers:{'Content-Type':'application/x-www-form-urlencoded'},
+    body:encode({
+      'form-name':'quote-request',
+      'business-name':document.getElementById('bizName').value,
+      'contact-name':document.getElementById('contactName').value,
+      'phone':document.getElementById('contactPhone').value,
+      'email':document.getElementById('contactEmail').value,
+      'address':document.getElementById('bizAddress').value,
+      'facility-type':mData.type||'Not specified',
+      'square-footage':mData.sqft+' sq ft',
+      'restrooms':mData.restrooms,
+      'services':services,
+      'frequency':fl
+    })
+  }).catch(()=>{});
+}
 function mBuildResult(){
+  submitToNetlify();
   const base=Math.round(mData.sqft*0.06*mData.freqMult);
   const low=base+mData.restroomAdder;
   const high=Math.round(low*1.6);
@@ -812,6 +862,15 @@ function toggleFaq(el){
   document.querySelectorAll('.faq-item.open').forEach(f=>{f.classList.remove('open');f.querySelector('.faq-toggle').textContent='+';});
   if(!isOpen){el.classList.add('open');el.querySelector('.faq-toggle').textContent='−';}
 }
+
+function toggleNav(){
+  document.querySelector('nav').classList.toggle('nav-open');
+  document.getElementById('hamburger').classList.toggle('open');
+}
+document.querySelectorAll('.nav-links a').forEach(a=>a.addEventListener('click',()=>{
+  document.querySelector('nav').classList.remove('nav-open');
+  document.getElementById('hamburger').classList.remove('open');
+}));
 
 mUpdateProgress();
 </script>
