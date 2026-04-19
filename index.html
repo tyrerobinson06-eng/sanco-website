@@ -642,7 +642,7 @@ footer{background:#06101f;padding:32px 5%;display:flex;align-items:center;justif
   <input name="restrooms">
   <input name="services">
   <input name="frequency">
-  <input name="estimate-range">
+  <input name="estimated_range">
 </form>
 
 <div class="modal-overlay" id="modalOverlay" onclick="if(event.target===this)closeModal()">
@@ -833,7 +833,7 @@ function submitToNetlify(estimateRange){
       'restrooms':mData.restrooms,
       'services':services,
       'frequency':fl,
-      'estimate-range':estimateRange
+      'estimated_range':estimateRange
     })
   }).catch(()=>{});
 }
