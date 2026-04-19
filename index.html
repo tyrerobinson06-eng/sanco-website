@@ -642,6 +642,7 @@ footer{background:#06101f;padding:32px 5%;display:flex;align-items:center;justif
   <input name="restrooms">
   <input name="services">
   <input name="frequency">
+  <input name="estimate-range">
 </form>
 
 <div class="modal-overlay" id="modalOverlay" onclick="if(event.target===this)closeModal()">
@@ -812,7 +813,7 @@ function mSelectFreq(el,key,mult){
   mData.freq=key; mData.freqMult=mult;
   document.getElementById('mnextBtn5').disabled=false;
 }
-function submitToNetlify(){
+function submitToNetlify(estimateRange){
   const encode=data=>Object.keys(data).map(k=>encodeURIComponent(k)+'='+encodeURIComponent(data[k])).join('&');
   const sel=document.querySelectorAll('.svc-check-btn.selected');
   const services=sel.length>0?Array.from(sel).map(b=>b.textContent.trim()).join(', '):'General cleaning';
@@ -831,18 +832,21 @@ function submitToNetlify(){
       'square-footage':mData.sqft+' sq ft',
       'restrooms':mData.restrooms,
       'services':services,
-      'frequency':fl
+      'frequency':fl,
+      'estimate-range':estimateRange
     })
   }).catch(()=>{});
 }
 function mBuildResult(){
-  submitToNetlify();
   const base=Math.round(mData.sqft*0.06*mData.freqMult);
   const low=base+mData.restroomAdder;
   const high=Math.round(low*1.6);
-  document.getElementById('estRange').textContent='$'+low.toLocaleString()+' – $'+high.toLocaleString();
   const periods={daily:'per day','3x':'per visit (3x/week)',weekly:'per week',biweekly:'per bi-weekly visit',onetime:'one-time'};
-  document.getElementById('estPeriod').textContent=periods[mData.freq]||'per visit';
+  const period=periods[mData.freq]||'per visit';
+  const estimateRange='$'+low.toLocaleString()+' – $'+high.toLocaleString()+' '+period;
+  submitToNetlify(estimateRange);
+  document.getElementById('estRange').textContent='$'+low.toLocaleString()+' – $'+high.toLocaleString();
+  document.getElementById('estPeriod').textContent=period;
   const rl=mData.restrooms===4?'4 or more':mData.restrooms+(mData.restrooms===1?' restroom':' restrooms');
   const fl=document.querySelector('.freq-opt.selected .freq-opt-label')?.textContent||'—';
   const sel=document.querySelectorAll('.svc-check-btn.selected');
